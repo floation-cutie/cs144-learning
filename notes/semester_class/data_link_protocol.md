@@ -7,13 +7,56 @@ typedef struct{
 }frame;
 ```
 
+Ensure that slow receivers not swamped by fast senders
 
+1. 字符计数
+2. 字节填充 PPP
+3. 比特填充 HDLC
+4. 物理层编码违例法 Coding Violations
+
+流量控制通过 Feedback-based flow control and Rate-based flow control
+
+Error detection CRC & ARQ
+
+Bit Error Rate Compute —- Choose scheme 
+
+#### Why Hamming Code so excellent?
+
+Basic idea : no any scheme can deal with all noise.
+
+Hamming Code –> Hamming Distance(差异比特的数量的最大值) 检错和纠错
+
+作为纠错码 —> 原消息码m位  + r冗余位 + 1 <= 2^r 
+
+原理： 从二维矩阵的角度进行观察 对于2的幂次的位置，它们的组合可以构成全体整数
+
+于是对于这个精心设计的子集，对他们一个个进行设问，最终发现问题 (check bit 保证位于判断集合之和为偶数)
+
+No error or error on the first position, or set the first position to make the whole block to be even(detect two errors)
+
+We can consider that from the perspective of **bit** 
+
+> 1 1  1 1  = 15,by four bits encoding 2^4 info
+>
+> if we set one bit to be the check bit, there could be 2^3 info every set
+>
+> we can let every set have even property,then every time’s ask will half the scope
+>
+> And most important is that the ask every time(every bit) encode the position bit of error number.
 
 #### 1.Simplex Utopia protocol
 
 #### 2.Stop-and-Wait protocol without noise
 
 #### **3.Simplex Protocol for a noisy Channel**   PAR
+
+停等协议 – 序列号(链路层1bit) 可以确保按序到达，在实际链路上传输
+
+而传输层的序列号需要设为更大 保证同编号的旧帧不可能被缓冲在网络中 因为传输层通过TCP无线传输
+
+Go-Back-N协议 窗口大小2^n - 1
+
+SR协议 2^(n-1)
 
 To avoid duplicate frame passing and delayed ACK
 
@@ -149,9 +192,9 @@ To avoid **multiple requests** for retransmission of the **same frame** ==receiv
 
 #### Performance
 
+平均重传数量为 1 / 1 - P P为出错概率
 
-
-HDLC 主站-》 从站 命令– 响应 **帧的结构**
+HDLC 主站-》 从站 命令– 响应 **帧的结构** 支持可靠传输
 
 不等长编码 Next域
 
@@ -165,4 +208,5 @@ P \ F 位 poll invite the terminal to send data
 
 SLP serial line IP 字节填充
 
-PPP 分配IP地址
+PPP 分配IP地址 + IPCP
+

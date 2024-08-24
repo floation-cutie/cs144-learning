@@ -136,6 +136,113 @@ nslookup的工作原理是什么呢?
 
 注意NAME这个字段可能为奇数字节，不需要进行边界填充对齐。
 
-我居然从服务器方得到了没有Answer回复的响应字段
-
 C语言不支持Lambda与RAII机制
+
+### 查询机制
+
+递归查询 (线性) && 迭代查询 本人
+
+### HTTP
+
+使用TCP作为传输层协议
+
+#### 1.0
+
+采用非持续连接
+
+**每次请求一个文件，建立TCP连接，收到响应之后立即关闭连接**
+
+浏览器会建立多个并行的TCP连接同时请求多个对象
+
+#### 1.1
+
+采用持续连接 使得对象服务器和客户浏览器之间的连接上持续传送文档数据  —- 流水线工作方式
+
+##### 报文格式
+
+* 起始行
+* 请求头部
+* —- 分割空行 —
+* 实体
+
+Header 起始行和头部字段 + body 消息正文 实体
+
+##### What differences between special newline characters or EOL characters?
+
+Different line break types problem was confronted when cross-platform compatibility.
+
+CR : Carriage Return LF: Line Feed to modify both the x-axis and y-axis of the cursor.
+
+##### HTTP Request and Response
+
+<img src="C:\Users\WESLEY\AppData\Roaming\Typora\typora-user-images\image-20240814172653345.png" alt="image-20240814172653345" style="zoom:50%;" />
+
+**Some important segment:**
+
+Accept: 可接受的文本类型
+
+Connection: keep-alive | closed 连接模式
+
+Host: 访问的主机名
+
+User-Agent: 客户用户代理信息
+
+4xx 客户差错 5xx 服务器差错(如服务器失效)
+
+Content-length: 343 用于区分粘包问题，表示正文数据包长度
+
+##### HTTP协议
+
+1. 支持C-S模式
+2. 简单快速
+3. 灵活
+4. 无连接：每次连接只处理一个请求
+5. 无状态：协议对于事务处理没有记忆能力
+
+### Cookie and session
+
+为了解决HTTP的无状态特性 **不同的用户数据如何进行区分**
+
+HTTP协议中的cookie包含 Web Cookie 和 浏览器 Cookie
+
+服务器发送给浏览器的Cookie，浏览器会进行存储，并与下一个请求一起发送给服务器
+
+**用于判断两个请求是否来自于同一个浏览器** 
+
+session: 
+
+1. 服务器提供仓库，专门保存每一个客户链接所需要的状态
+2. 时效性信息 放置在**内存数据库**中 redis
+
+需要 服务器将仓库的唯一状态值 通过cookie技术，给到浏览器 session-id **sid** 
+
+cookie中包含 session id
+
+代理服务器的存在 位于中间系统上的Web缓存
+
+### World Wide Web
+
+万维网是运行在因特网上的分布式应用
+
+<协议>://<主机>:<端口>/<路径>
+
+web协议:
+
+​	传输协议 HTTP
+
+​	数据解析协议 HTML CSS JavaScript — pdf rstp
+
+### Overall Architecture
+
+面向不同业务的产生和使用数据的逻辑层
+
+⼀般常⻅的 Web 服务器主要有Apache、IIS、Jboss、Tomcat、WebSphere、WebLogic 等
+
+C-S架构 — 需要Data Center
+
+P2P方式 — **没有固定的服务请求者和服务提供者** （分布式存储）
+
+**扩展性强** 不需要庞大的服务器设置和服务器带宽
+
+
+

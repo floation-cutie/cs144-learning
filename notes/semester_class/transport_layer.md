@@ -1,5 +1,9 @@
 ### The Transport Layer
 
+**流量控制，拥塞控制，swnd,rwnd,cwnd,可靠传输很重要, max-min Fairness，AIMD重要,等价速率W / RTT, 拥塞Timer设计**
+
+max-min fairness(从带宽均分最小的链路出发，均分剩余带宽）
+
 #### The Transport Service
 
 网络层不考虑可靠传输，对应职责由传输层实现
@@ -125,11 +129,16 @@ To prevent **Old Connection Request and Duplicate Connection Request and ACK**
 
 * The transport entity removes the information about the connection from its table of currently open connections and signals **the connection’s owner** (the transport user)
 
-##### Half-open Connections
+##### Half-open Connections 半开问题
 
 When the initial DR and N retransmissions are all lost, one host give up and release the connection, while the other side still keep connecting
 
 ==How should the host notice??== 发送Dummy TPDU(keepalive 发送心跳包 heartbeat) 发送前述已发送的数据包
+
+**保活计时器定时探测**
+
+FIN，SYN消耗序号 
+对于连接建立过程，如果ack携带数据，则消耗序号，如果不携带数据，则不消耗序号
 
 #### Transmission Control Protocol
 
@@ -167,7 +176,7 @@ ARQ  自动重传 -> 停等 和 滑动窗口
 
 对于接收方的缓存 ==Decouple buffering from ack== 同时告知ACK和缓存
 
-Variable sized windows: Dynamic buffer management **避免潜在的deadlock** –通过重发过去的数据 
+Variable sized windows: Dynamic buffer management **避免潜在的deadlock** –通过重发过去的数据 1-byte segment
 
 There’s two control factor
 
@@ -182,7 +191,7 @@ piggybacks both ack and buffer allocations onto the reverse traffic
 
 拥塞控制 **combine network layer with transport layer**
 
-* Congestion occurs at routers, so it is detected at the network layer
+* Congestion occurs at routers, so it is **detected** at the network layer
 * ==The only effective way== is for the transport protocols to send packets into the network **more slowly**
 
 Nowadays, Internet relies **heavily** on the transport layer for congestion control
@@ -202,7 +211,7 @@ Goals:
 
 Onset of congestion 延迟的抖动
 
-对于单个的通信实体，他通过看延迟的变化时间判断拥塞
+**对于单个的通信实体，他通过看延迟的变化时间判断拥塞**
 
 **power = load / delay**
 
@@ -240,13 +249,15 @@ XCP – signal : tell the rate to use, it is explicit and precise
 
 经典TCP: packet loss 选择丢包
 
-TCP with ECN : congestion warning, 通过沿途的路由器上的ECN标记，接收方收到之后通知发送方江苏 explicit but not precise
+TCP with ECN : congestion warning, 通过沿途的路由器上的ECN标记，接收方收到之后通知发送方降速 explicit but not precise
 
 Fast TCP: signal is End-to-End delay 端到端时延抖动分析 not explicit and precise
 
 Compound TCP: packet loss && end-to-end delay…
 
 **The control law** 
+
+线性增 乘法减
 
 If no congestion signal, senders should **increase** their rates
 
@@ -295,6 +306,9 @@ TCP通过packet loss 作为拥塞信号**congestion signal** 原因是现有的�
 **How to set a TCP timer accurately?**
 
 * The timer includes estimates of the **mean** and **variation** in RTT
+* 重传时间 Timeout = 2 * RTT
+* RTTVAR =  3/4 RTTVAR + 1/4 | RTT - R |
+* Timeout  = RTT + 4 * RTTVAR
 
 ##### Two Problems in Practice
 
@@ -325,7 +339,7 @@ TCP通过packet loss 作为拥塞信号**congestion signal** 原因是现有的�
 
 ###### Slow Start Threshold
 
-当在向慢启动阈值增加的过程中，如果检测到丢包，将ssthresh 的值减少为一半，然后重新开始慢启动
+当在向慢启动阈值增加的过程中，如果检测到丢包，将ssthresh 的值减少为一半，然后**重新开始慢启动**
 
 若正常到达ssthresh,进入Additive Increase Mode(通过修改窗口大小)
 
@@ -339,7 +353,9 @@ For the sender to recognize quickly that one of the packets has been lost:
 
 As the packets beyond the lost packet arrive at the receiver, they trigger ACKs, there ACKs have **the same ACK number**
 
-If the sender receives 3 duplicate ACKs imply that a packet has been lost. The packet is retransmitted before timeout, otherwise we have to restart the Slow-Start Process again!
+总共四个相同的确认
+
+If the sender receives 3 duplicate ACKs imply that a packet has been lost. The packet is retransmitted before **timeout**, otherwise we have to restart the Slow-Start Process again!
 
 ##### Fast Recovery
 
@@ -373,7 +389,7 @@ UDP提供消息边界，为消息流服务
 
 是字节流服务，不是消息流服务
 
-为TCP优化提供了方便 灵活 简单 适应
+**为TCP优化提供了方便 灵活 简单 适应**
 
 used in FTP SSH HTTP HTTPS
 
@@ -385,9 +401,11 @@ MSS默认为536字节，两方的MSS不需要相同
 
 RST bit used to refuse a connection
 
-在TCP中的窗口管理 –> 接收方也是通过滑动窗口进行接收的，当窗口大小为0时，发送方会一段时间重传1-byte segment以验证ACK和window，防止死锁现象
+**在TCP中的窗口管理 –> 接收方也是通过滑动窗口进行接收的，当窗口大小为0时，发送方会一段时间重传1-byte segment以验证ACK和window，防止死锁现象** 探测报文段
 
 #### Nagle’s Algorithm
+
+**粘包现象**
 
 应用场景：数据量小，对于大负载来说，网络利用效率低下
 
@@ -400,6 +418,8 @@ RST bit used to refuse a connection
 #### Silly Window
 
 receiver should not send a window update until it can handlt the MSS or its buffer is half empty, which is smaller
+
+**Clark’s Algorithm**
 
 #### TCP Timer
 

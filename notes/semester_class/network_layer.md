@@ -1,5 +1,7 @@
 ### Network Layer
 
+**路由算法很重要，网络协议很重要，报文分析很重要，拥塞控制重要,IP分片重要，路由表结构重要，直接交付或间接交付重要（next_hop为下一跳设备的地址），NAT表项重要(ip:port -> ip:port-> ip:port) 利用了传输层，IPv6重要**
+
 #### Overview
 
 The lowest layer that deals with **end to end** transmission, the datalink layer is about **point to point** transmission
@@ -17,9 +19,11 @@ Avoid **overloading** some of the communication lines and routers while leaving 
 设置统一的地址交给传输层 
 
 1. Connection-Oriented (虚电路 Virtual Circuit)
-2. Connectionless Service (数据报 Datagram)
+2. Connectionless Service (数据报 Datagram) 到达顺序 到达路径均不要求
 
 Datagram search for routing table(Need to big)
+
+**Routing table** [Dest, Line]
 
 But the datagram may arrive out of order,due to connectionless
 
@@ -37,6 +41,8 @@ Routers don’t hold state information about connections, but need to route each
 
 The datagram subnet can’t achieve congestion control.
 
+分组交换的虚连接和电路交换的连接只是类似，而不相同
+
 #### Routing Algorithms
 
 How to construct a routing table? No matter the datagram subnet or virtual circuit subset.
@@ -46,6 +52,18 @@ For VC:
 Routing decisions are made only when a new virtual circuit is being set up.(**Session routing**) 会话路由
 
 For Datagram:
+
+>  自适应 分层次(划分为很多*自治系统*) 分布式
+>
+> 在自治系统AS的内部和外部，采用不同的路由选择协议
+>
+> 域间路由选择 选择外部网关协议 EGP external
+>
+> 域内路由选择 使用内部网关协议 IGP internal
+>
+> Why Gateway? Initally we call router as gateway.
+
+
 
 the decision must be made anew for every arriving data packet since the best route may have changed since last time(**Update**)
 
@@ -76,6 +94,8 @@ Classification ::
 
 Every router runs at its own optimal path, avoiding the loop circuit.
 
+局部最优 = 全局最优
+
 ##### Sink Tree
 
 From all sources to a destination form a tree rooted at the destination
@@ -89,7 +109,7 @@ The weight value is largely dependent on yourself
 3. Mean queueing and transmission delay
 4. A function of all the factors
 
-关键是形成统一的拓扑结构图
+**关键是形成统一的拓扑结构图**
 
 ##### Flooding Algorithm
 
@@ -107,7 +127,7 @@ Unlike the Transparent Bridge,which use STP (Spanning Tree Protocol) to solve th
    Each router records maximal seq per source 
 3. Each data items contains **version number**
 
-洪水算法用于通知所有节点网络中统一的路由信息
+**洪水算法用于通知所有节点网络中统一的路由信息**
 
 ##### Distance Vector Routing
 
@@ -115,20 +135,33 @@ routed by surrounding routers
 
 Router maintains a table (destination, distance, 接口line, next hop)
 
-The table is updated by exchanging information with neighbors
+**The table is updated by exchanging information with neighbors** 交换的各自的路由表
 
 1. RIP (routing information protocol) 周期性更新
-2. Triggered update
+2. Triggered update 触发更新
 
-Update by order each iteration –> until nothing changes
+Update by order each iteration –> until nothing changes 得到收敛
+
+**更新的条件**：
+
+1. 到达目标网络，相同的下一跳，最新消息
+2. 发现新网络
+3. 到达目标网络，不同的下一跳，新的路由优势
+4. 等价负载均衡
+
+**距离向量的更新以得到最佳路径 min{x + t}**  
 
 算法问题:
 
 Count-to-infinity Problem
 
-**Set infinity to 16** 
+**Set infinity to 16** 16表示不可达
 
 The problem is when X tells Y **some path**,Y itself has no way of knowing whether itself is on the  path
+
+**坏消息传播慢** 适用于小规模的自治系统
+
+本质上路由器自身无法判断整体拓扑结构是否出现环路
 
 ##### Path Vector Routing
 
@@ -146,8 +179,11 @@ BGP-4 IDRP
 
 ==The LSP has its own owner who has unique authority==
 
-1. Through HELLO packet broadcast in broadcast network,unicast in multi-access network
-   The topology need to be simplified
+1. Through HELLO packet broadcast in broadcast network,unicast in **multi-access network**
+   
+   (选出DR 和 BDR)The topology need to be simplified 有判活倒计时选项
+   
+2. 各路由器的链路状态数据库LSDB最终将达到一致
 
 ###### Use Artificial Node
 
@@ -157,7 +193,7 @@ BGP-4 IDRP
 
 proportional to the bandwidth of the link (The routing tables may oscillate)
 
-3. Building LSP(分组字段中包括 seq, age, neighbors and their distance)
+3. Building LSP(分组字段中包括 seq, age, neighbors and their distance) 信息对象是邻居路由器和直连网络
 4. Distributing LSP (avoid from using different **versions of the topology**)
 
 ###### About Link State Packet
@@ -182,17 +218,23 @@ duration of one site,When a connection was deleted(删除而非死亡)
 
 IS-IS (路由器协议)  IPX / IP / AppleTalk…
 
-OSPF (open shortest path first)
+OSPF (open shortest path first) 开放最短路径优先协议
 
 ##### Hierarchical Routing
 
-每个路由表的配置项太多了 So divide the Internet into **different region**
+**划分区域** 此时交换信息的范围局限在每一个区域，而不是整个自治系统AS
+
+每个路由表的配置项太多了 
+
+同时flooding时的网络通信量太大了
+
+So divide the Internet into **different region**
 
 不同于链路层,这是网络层层次化路由
 
 #### Congestion Control Algorithm
 
-拥塞控制 congestion collapse
+**拥塞控制** congestion collapse
 
 flow control & congestion control 
 
@@ -205,15 +247,23 @@ They are different,the latter one is global issue
 * Traffic-aware Routing(流量感知) 同时避免流量震荡 分布式算法无法解决
 * Admission Control (准入控制)
   * 用于虚电路网络 
-  * Traffic descriptions –> rate and shape
+  * Traffic descriptions –> rate and shape 限流
 * Traffic Throttling(进行节流)
   * tell the sender to **slow down**(传输层控制)
-  * determine congestion 计算平均值 $d_{new} = \alpha d_{old} + (1 - \alpha) s$
-  * 发送choke packet(抑制包) or ECN(tag the congested packet) and the destination note the congestion and inform the sender (搭载bit)
+  
+  * determine congestion 计算平均值 $d_{new} = \alpha d_{old} + (1 - \alpha) s$ 
+    判断方法可能根据 **the utilization of the output link**
+  
+    **the buffer of queued packets inside the router**
+    **the number of packets that are lost** 但一直是根据平均值分析
+  
+  * 发送choke packet(抑制包) or ECN(tag the congested packet) and the destination note the congestion and inform the sender (搭载bit) 目的地址进行通知
+  
   * And hop-by-hop choke packets
 * Loading Shedding(丢包)
   * 丢弃对象–> 随机 or 新数据(file transfer) or 旧数据(multimedia) or  packet priority
-  * RED – randomly early detection 丢包导致传输层源端降速
+  * RED – randomly early detection **早期**随机检测 丢包导致传输层源端降速
+    RED is used when hosts can’t receive explicit signals
 
 #### QoS
 
@@ -233,7 +283,7 @@ Carrier monitor a traffic flow, mark as having lower priority
 
 ##### Bucket Algorithm
 
-漏桶算法,network polices traffic, host shapes burstiness
+漏桶算法,network polices traffic, host shapes burstiness 装的是packet
 
 令牌桶 –> 权利 本身也是突发量 average rate
 
@@ -251,9 +301,11 @@ $B + RS = MS$
 
 原有量 + 补充量 = 消耗量
 
+Then send at the arrival rate
+
 ##### Packet Scheduling
 
-分组调度 ==different flows can reserve different resources==
+分组**调度** ==different flows can reserve different resources==
 
 FIFO顺序 RED随机 
 
@@ -340,7 +392,7 @@ from source, IP packet is send with its header bits **set to indicate that no fr
 
 If a **router** receives a packet that is too large, it generates an error packet, returns it to source and **drops the packet**
 
-When the source receives the error packet, it uses the information inside to re-fragment the packet into pieces that small enough
+When the source receives the **error packet**, it uses the **information inside** to re-fragment the packet into pieces that small enough
 
 the process repeated…
 
@@ -387,7 +439,7 @@ Total length has **16 bits** ==include both header and data== 最大为65535
 
 Identification (16 bits) **All the fragments of  a datagram contain the same Identification value** 
 
-DF (don’t fragment) It is used as part of the process to discover the path MTU
+DF (don’t fragment) **It is used as part of the process to discover the path MTU**
 
 MF (more fragments?) 
 
@@ -420,7 +472,7 @@ Source address + Destination address 32 bit –>(For CPU, it is convenient to ac
 
 Why in IP protocol, the source address is at the head of the destination address?
 
-To help error report and route trace, while the datalink layer aims to transport frame rapidly(Its destination MAC address is before source MAC address)…
+**To help error report and route trace, while the datalink layer aims to transport frame rapidly(Its destination MAC address is before source MAC address)…**
 
 #### IP Addresses
 
@@ -498,7 +550,7 @@ Network address translation
 
 For outgoing packet, source address and TCP source port are replaced, both the IP and TCP checksums are recomputed
 
-For incoming packet, the Destination Port -> internal IP address and original TCP source port, and recompute IP and TCP checksums 
+For incoming packet, **the Destination Port -> internal IP address and original TCP source port**, and recompute IP and TCP checksums 
 
 **There are three reserved ranges (10/8) (172.16.0.0/12) (192.168/16)**
 
@@ -512,7 +564,7 @@ And the capacity of NAT extension is huge (The internal source address port + ex
 
 ###### 静态NAT表项
 
-When 10.0.0.7 need to be Web server
+When 10.0.0.7 need to be Web server 用于外部设备访问内网设备
 
 **Local 10.0.0.7:8080 – Global 123.123.42.12:80 – Peer 0:0 ** 
 
@@ -596,7 +648,9 @@ Discover –> Offer –> Request –> Ack (Using UDP)
 
 #### OSPF (Open Shortest Path First)
 
-路由协议
+保证了**不会产生路由环路** 
+
+##### 路由协议
 
 1. Interior Gateway Protocol 内部网关协议
    1. OSPF
@@ -615,3 +669,6 @@ A router connects to two areas must keep different databases for both areas
 stub area is the only router out
 
 EGP 控制路由的传播和选择最佳路由
+
+有BGP发言人[**路由器之间建立TCP连接**]
+

@@ -1,5 +1,7 @@
 ### Medium Access Control Sublayer
 
+**这一章很重要** ==以太网相关知识== 
+
 媒体访问控制 – –多点通信(广播) 比datalink层次更低
 
 在局域网中非常常见 分配信道
@@ -124,13 +126,15 @@ aborts transmission as soon as it detects a collision
 
 **The whole three states of CSMA/CD:**
 
-Contention  Transmission or Idle
+Contention  Transmission or Idle 三种状态
 
-Which is a **half-duplex** system
+Which is a **half-duplex** system  半双工系统
 
 ##### Wireless LAN Protocols
 
 无线电不能通过反馈的叠加信号检测冲突
+
+Interference at the **receiver**,not at the **sender** (so the sender can’t detect if there’s collision)
 
 Radio Transmitter & Receiver
 
@@ -140,9 +144,15 @@ Hidden station(the interference at the receiver)
 
 Exposed station
 
+PCF and DCF 
 
+Point Coordination Function use **the base station** to control all activity in its cell 单点控制
 
-###### MACA collision avoidance
+Distributed Coordination Function 
+
+分布式管理
+
+###### MACA multiple access with collision avoidance 
 
 The wireless communication has range limit
 
@@ -168,13 +178,27 @@ must be silent until the data frame is complete
 
 以太网电缆
 
+早期同轴电缆和集线器的工作逻辑保持为 总线逻辑
+
 HUB 逻辑上总线结构 物理上星型结构  dedicated cable
+
+MAC: 目标在前 IP：目标在后
+
+**速度的发展** 10Mb/s (曼彻斯特编码)—> 100Mb/s —-> 1Gb/s —> 10Gb/s
+
+**类型的发展** 早期为共享式以太网
+
+需网络适配器Adapter
 
 10BASE-T means 10Mbps and 基带信号 and twisted pair双绞线
 
 由于物理上星型 –> 接收通信范围为半径
 
 以太网的拓朴结构 Linear Spine Tree Segmented中继器(避免信号过于削弱)
+
+==为什么共享以太网的总线长度不能太长?== 
+
+总线长度越大，端到端时间延迟越长，发生碰撞的概率越大
 
 #### Manchester Encoding
 
@@ -185,7 +209,7 @@ HUB 逻辑上总线结构 物理上星型结构  dedicated cable
 帧格式！！
 
 1. DIX Ethernet
-   Preamble前导 (准备信号) + Dest + Source + Type类型 + Data + Pad(填充) + Checksum
+   Preamble前导 (准备信号) + Dest + Source + Type类型 + Data + Pad(填充) + Checksum 32位
 2. IEEE 802.3
 
 Preamble前导 (准备信号) + SOF + Dest + Source + Length + Data + Pad(填充) + Checksum
@@ -198,7 +222,9 @@ MAC Address 6 bytes
 
 ###### Frame Length
 
-1514 bytes Based on the fact that transceiver needs enough RAM to hold an entire frame
+最大最小帧长度
+
+1518 bytes Based on the fact that transceiver needs enough RAM to hold an entire frame
 
 And the minimum frame is at least 64 bytes long **the minimum boundary**
 
@@ -206,25 +232,39 @@ To prevent a station from completing the transmission of the short frame
 
 before the first bit has reached the far end of the cable
 
-
+最大1500 最小46，如果更小，填充至46
 
 **Collision detection can take as long as 2T**
 
+2T被标准规定了为51.2us
 
+最小帧长是可以被计算得到的 51.2us * 10Mb/s  = 512b = 64B
 
 ###### Binary Exponential Backoff Algorithm
 
 二进制指数退避算法
 
-1st collision, choose random number 0 - 1 backoff **circle of the particular time**
+1st collision, choose random number 0 - 1 backoff **circle of the particular time** ==2^n - 1==
 
 … until 10 +th collision, every device backoff random circles
 
-if 16 collisions still wrong, reports failure to higher layers
+if 16 collisions still wrong, reports failure to higher layers停止发送
 
 
 
 #### Switched Ethernet
+
+交换机也是用STP生成树协议
+
+**本质上就是多接口的网桥** 全双工 && 自身内部同时连通多对接口 不是CSMA/CD
+
+扩大了广播域 隔离了冲突域
+
+现代交换机可以自动识别连接模式，并进行自配置
+
+Cut-through 增加了数据链路的负担
+
+==存储转发orCut-Through==  接收完目的MAC地址就开始转发，此时的转发延迟为 6 * 8 / 100  = 0.48us
 
 Token Ring 令牌环 single,shared medium 
 
@@ -246,11 +286,17 @@ For Switch,Each port is its own independent collision domain
 
 #### Fast Ethernet
 
+100Base-T
+
 802.3u : A Soaped-up Ethernet 向后兼容
 
 Keep the old rules but make it faster
 
 category 5 UTP use 125MHz
+
+**最小帧长不变 最大长度从1000m减少到100m 争用期缩短到5.12us**
+
+使用了以太网交换机
 
 can negotiate the speed(10Mbps for 曼彻斯特 100Mbps for 4B/5B) and duplexity(half CSMA/CD / full)
 
@@ -260,19 +306,39 @@ autoconfigure
 
 go 10 times faster 并不完全兼容 
 
-在半双工时:
+**如何提升速率呢?** 减少网段长度或者增大最小帧长似乎最好
 
-Carrier Extension to remain the long distance
+**但是**千兆以太网网段长度若减少到10m,无利用价值
 
-它在硬件上将帧扩展到512bytes (How to solve problem of short radius?)
+若最小帧长提升到640B,开销太大
 
-Frame Bursting
+##### How does Gigabit Etherent improve speed?
+
+在半双工时
+
+**Carrier Extension to remain the long distance** 进行载波延伸(填充字节，使争用期为512字节)
+
+**它在硬件上将帧扩展到512bytes** (How to solve problem of short radius?)
+
+==争用期进行帧扩展== Key： 帧扩展 + 帧突发
+
+**Frame Bursting** 进行分组突发(连续发送短帧，减少overload)
 
 802.3z  8B/10B coding
+
+需要注意的是, 在全双工时，这些都不需要存在
+
+
+
+#### 万兆以太网
+
+只有全双工 —> 不再考虑碰撞检测了
 
 #### Flow Control
 
 流量控制 Control Frames 告知CTS  or give a special control PAUSE frame
+
+10Gb Ethernet 为64B/66B code
 
 #### Wireless LAN
 
@@ -282,9 +348,18 @@ Frame Bursting
 
 access point (AP) base station  CSMA/CA
 
+1. 有固定基础设施的 基站AP 最小构件BSS
+2. 无固定基础设施的 ad hoc Network 对等的移动站点
+
 radios are always half duplex and can’t do collision detection(the singal is very weak)
 
+有隐蔽站问题
+
+第一步 等待DIFS 帧间间隔 以便使高优先级的帧先发送
+
 **count down idle slots** 
+
+如果被占用 — 冻结剩余时间
 
 if lack of ACK,double the backoff
 
@@ -295,6 +370,12 @@ the data and ACK internal is less than 30us
 Each frame carries a NAV
 
 Each station records when the channel is in use by tracking NAV network allocation vector
+
+调整自己的NAV **虚拟载波监听机制**
+
+CSMA/CD在共享式以太网没有确认机制 
+
+CSMA/CA在无线信道(误码率比较高) 需要确认机制 采用停等协议 **ACK** 
 
 ==To Increase Successful Transmissions==
 
@@ -308,7 +389,7 @@ allows frame to be split into fragments
 
 what’s the interframe spacing in 802.11?
 
-==SIFS==: short interframe space (allow the parties in a single dialog)
+==SIFS==: short interframe space (allow the parties in a single dialog) 最短的帧间间隔
 
 Here are some case
 
@@ -320,7 +401,7 @@ Here are some case
 
 ==AIFS== arbitration interframe space   PCF
 
-
+DIFS > SIFS
 
 ##### Saving Power
 
@@ -346,7 +427,13 @@ if different speed stations collide, and both has same chance to transmit **Decr
 
 WiFi Frame is unique
 
+数据帧 + 控制帧 ACK rts cts+ 管理帧
+
 For **WDS**
+
+AP地址 + 源地址 + 目的地址
+
+以太网中 网桥透明 802.11 AP不透明
 
 **1.Recipient address 2.transmitter address**
 
@@ -354,21 +441,25 @@ For **WDS**
 
 ==BSS== means basic service set基本服务集
 
-
-
-
-
 address 3: is optional MAC address of router interface to which AP is attached
-
-
 
 LLC logical link control is taller than MAC protocol
 
 #### Data Link Layer Switching
 
+在数据链路层上扩展以太网 - - - 分离不同的碰撞域
+
+**转发表** [地址，接口，时间戳] 
+
+> 网桥的接口在向其连接的网段转发帧时，会执行相应的媒体接入控制协议，对于共享式以太网就是CSMA/CD协议
+
+
+
 ##### **Transparent Learning Bridge**
 
 How to transmit from 802.x to 802.y？
+
+What’s **transparent**? 以太网的各网桥对于**各站点**而言是看不见的 802.1D标准
 
 透明网桥!! 通过backward Learning
 
@@ -377,8 +468,6 @@ Split a single LAN into separate LANs to accommodate the load
 同一网段进行内部的划分，实现LAN之间的数据传输
 
 or use the bridge to create a extended LAN.
-
-
 
 It takes a station table,list the destination and tell which output line it belongs on
 
@@ -396,6 +485,8 @@ Solution:
 
 Periodically scan the table and **purges** all entries too old
 
+每条记录有时限
+
 避免已关机的站点长期占用一个表项
 
 *  means if a machine is quiet for some time, any traffic sent to it will have to be flooded until it next sends a frame itself
@@ -403,6 +494,8 @@ Periodically scan the table and **purges** all entries too old
 ##### **Spanning Tree Bridges**
 
 分布式算法 distributed
+
+STP —–> BRDU
 
 ###### Problem
 
@@ -442,20 +535,40 @@ Repeaters，Hub,Bridge,Switch,
 
 Speical-purpose CAM 内容查询比较 ==VLSI== 集成芯片
 
-Cut-through switches 快速交换机 不存储 直接转发
+Cut-through switches 快速交换机 不存储 直接转发(需要先查看完目标MAC地址)
+
+##### Remote Bridges
+
+
 
 #### Virtual LANs
 
-虚拟局域网使得在同一局域网内
+虚拟局域网使得在同一局域网内划分为不同的网段
 
-avoid Broadcast storm & ensure Security
+隔离广播域 
 
-only set by the Bridges
+**avoid Broadcast storm & ensure Security**
+
+only set by the Bridges 不改变实际的网络设备的内部配置
+
+> 属于同一VLAN的站点之间可以直接进行通信，不同的VLAN中的站点不能直接通信
+
+连接在同一交换机可以属于不同的VLAN
+
+802.1Q帧
 
 **configuration tables** tell which VLANS are accessible via which **ports**
 
-新增4个字节 protocol标志  有12Bits用于标识颜色
+新增4个字节 protocol标志  有12Bits用于标识颜色VID 所属VLAN的编号
 
 ##### VLAN aware感知
 
 第一个 VLAN 感知的网桥在帧上添加一个 VLAN 字段，路径上的最后一个网桥把添加的 VLAN 字段删除。
+
+打标签 和 去标签 处理
+
+接口类型分为Access 和 Trunk
+
+默认接口VLAN ID为1 接口类型默认为Access
+
+Trunk类型用于交换机之间或 交换机与路由器之间 的互连

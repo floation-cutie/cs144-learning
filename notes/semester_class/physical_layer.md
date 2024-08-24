@@ -1,3 +1,17 @@
+#### Importat concepts
+
+对于Public Telephone Model, Text –>digital –> analog -> analog –> digital –> text
+
+Channel 信道 
+
+Bit rate 数据传输速率 bps
+
+Baud 码元传输速率 1 Baud = $log_2(V)$ bps V是电平级数
+
+Bandwidth 带宽 占用频率范围Hz
+
+吞吐量Throughput 
+
 ####  The properties of different kinds of physical channels
 
 1.bandwidth 频率范围Hz
@@ -13,8 +27,6 @@
 
 Something about “propagation” : [backward propagation](https://www.youtube.com/watch?v=ibJpTrp5mcE)
 
-
-
 Simplex Half-duplex Full-duplex 单工,半双工…
 
 Asynchronous transmission: 即异步传输 
@@ -23,17 +35,21 @@ Asynchronous transmission: 即异步传输
 
 异步串行传输 : 通过字符为单位传输 独立时钟
 
-同步串行传输 : 比特同步 且 以数据块传输
+同步串行传输 : 比特同步 且 以数据块传输 通过时钟信号线对信号进行比特同步
 
 ####  theoretical analysis of data transmission
 
 Review of  **Fourier Analysis**
 
+##### Nyquist’s theorem
 
+用于理想低通信道 —> 采样带宽的二倍 每个采样得到一个sample 码元
 
-
+用于理想带通信道 -> 采样带宽的一倍
 
 ==The Sample Rate must at least greater than or equal to the Data BandWidth,so that It can reconstruct the original Data== 	
+
+信噪比越大，噪声越小，信号传输效果越好
 
  the ratio of the signal power to the noise power, called the **SNR** (**Signal-to-Noise Ratio**)
 
@@ -52,6 +68,8 @@ And $10 \times \log_{10}{S / N} $ is defined as UNITs ==dB== decibels
 磁带or光盘
 
 ##### twisted pair
+
+为了减少串扰现象
 
  A signal is usually carried as the difference in voltage between the two wires in the pair. 
 
@@ -167,6 +185,8 @@ Usually, amplitude and phase are modulated in combination
 
 结合调频调制 和 正交调制
 
+调制 –> 低频信号 到 高频信号 上行信道
+
 modem constellation diagram
 
 模拟信道上进行调制与解调
@@ -213,7 +233,7 @@ each one periodically getting the entire bandwidth for a little burst of time
 
 即在固定的时间戳内不同信号占据的时间间隔被确定，发送方和接收方进行同步沟通
 
-. Small intervals of **guard time** are added to accommodate small timing variations
+Small intervals of **guard time** are added to accommodate small timing variations
 
 ##### Code Division Multiplexing
 
